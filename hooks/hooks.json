@@ -1,0 +1,37 @@
+{
+  "description": "context-checker hooks — (1) UserPromptSubmit: inject a one-shot warning when context usage crosses the notice (60%) or critical (75%) threshold, so the session wraps up its sub-task before auto-compact fires. (2) PreCompact: write a markdown checkpoint of recent user messages, assistant replies, files touched, and bash commands before the transcript is summarized away. (3) PostCompact: point Claude at that checkpoint and reset the threshold state so later crossings warn again.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/prompt-submit.py\""
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.py\""
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/post-compact.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

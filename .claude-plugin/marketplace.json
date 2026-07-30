@@ -1,0 +1,13 @@
+{
+  "name": "context-checker",
+  "owner": {
+    "name": "itoshun"
+  },
+  "plugins": [
+    {
+      "name": "context-checker",
+      "source": "./",
+      "description": "Context window monitoring and compaction checkpoints for Claude Code. Status line usage percentage, threshold warnings, and pre/post-compact checkpoints so a summarization never silently drops what you were working on."
+    }
+  ]
+}
