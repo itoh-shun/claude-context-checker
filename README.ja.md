@@ -38,9 +38,21 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 ### 1. プラグインを追加
 
 ```
-/plugin marketplace add itoh-shun/claude-context-checker
+# 共有マーケットプレイス sito-plugins 経由（推奨・rig プラグインも同居）
+/plugin marketplace add itoh-shun/rig
 /plugin install claude-context-checker@sito-plugins
+
+# または本リポジトリを直接追加（共有マーケットプレイスを使わない）
+/plugin marketplace add itoh-shun/claude-context-checker
+/plugin install claude-context-checker@claude-context-checker
 ```
+
+> 0.4.x からのアップグレード: 本リポジトリ自身のマーケットプレイスも一時期 `sito-plugins`
+> という名前を名乗っていたが、無関係な別プラグイン（`rig`）が同じ名前を名乗ったため衝突した。
+> Claude Code はインストールをマーケットプレイス名でキー管理しているため、後から追加された方が
+> 相手の登録を無言で上書きし、本プラグインのフックが発火しなくなっていた。以前
+> `itoh-shun/claude-context-checker` 経由でインストールしていた場合は、そのマーケットプレイスを
+> 削除し、上記いずれかのコマンドで追加し直してほしい。
 
 これで3つのフック・skill・subagent status line が有効になる。
 
@@ -55,12 +67,14 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 {
   "statusLine": {
     "type": "command",
-    "command": "sh \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/run.sh\" \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/statusline.py\""
+    "command": "sh \"$HOME/.claude/plugins/cache/sito-plugins/claude-context-checker/<version>/hooks/run.sh\" \"$HOME/.claude/plugins/cache/sito-plugins/claude-context-checker/<version>/hooks/statusline.py\""
   }
 }
 ```
 
-パスは実際のインストール先に合わせること（`/plugin` で確認できる）。
+パスは実際のインストール先に合わせること（`/plugin` で確認できる）。`marketplaces/<name>/` ではなく
+`cache/<マーケットプレイス名>/claude-context-checker/<version>/` になる点に注意——前者はマーケットプレイス
+自体のリポジトリ（共有マーケットプレイス経由なら `rig` のコード）であり、本プラグインの実体ではない。
 プラグイン機構を使わず導入する場合は [docs/manual-install.md](docs/manual-install.md) を参照。
 
 `run.sh` は `python3` を前提とせず、動くインタプリタを選ぶ。Linux / macOS なら

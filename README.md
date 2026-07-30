@@ -39,9 +39,21 @@ the ratio instead, using the same thresholds as the main bar.
 ### 1. Add the plugin
 
 ```
-/plugin marketplace add itoh-shun/claude-context-checker
+# via the shared sito-plugins marketplace (recommended — also hosts the rig plugin)
+/plugin marketplace add itoh-shun/rig
 /plugin install claude-context-checker@sito-plugins
+
+# or directly from this repo, no shared marketplace involved
+/plugin marketplace add itoh-shun/claude-context-checker
+/plugin install claude-context-checker@claude-context-checker
 ```
+
+> Upgrading from 0.4.x: this repo's own marketplace was briefly named `sito-plugins`
+> too, until it collided with an unrelated plugin (`rig`) claiming the same name —
+> Claude Code keys installs by marketplace name, so whichever was added last silently
+> took over the other's registration, and this plugin's hooks stopped firing. If you
+> installed via `itoh-shun/claude-context-checker` before, remove that marketplace and
+> re-add it with one of the two commands above.
 
 That wires the three hooks, the skill, and the subagent status line.
 
@@ -56,12 +68,15 @@ to `~/.claude/settings.json` yourself:
 {
   "statusLine": {
     "type": "command",
-    "command": "sh \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/run.sh\" \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/statusline.py\""
+    "command": "sh \"$HOME/.claude/plugins/cache/sito-plugins/claude-context-checker/<version>/hooks/run.sh\" \"$HOME/.claude/plugins/cache/sito-plugins/claude-context-checker/<version>/hooks/statusline.py\""
   }
 }
 ```
 
-Check the path against your install — `/plugin` shows where the plugin landed.
+Check the path against your install — `/plugin` shows where the plugin landed. It is a
+`cache/<marketplace-name>/claude-context-checker/<version>/` path, not the
+`marketplaces/<marketplace-name>/` one — that directory holds the marketplace's own repo
+(e.g. `rig`'s, when installed via the shared marketplace), not this plugin's files.
 See [docs/manual-install.md](docs/manual-install.md) to install without the plugin system.
 
 `run.sh` picks a working interpreter instead of assuming `python3`. On Linux and
