@@ -14,8 +14,9 @@ Any path works; the scripts locate their own directory. The examples below assum
 
 ## 2. Wire the status line and hooks
 
-Merge into `~/.claude/settings.json`. `$HOME` is not expanded inside hook commands
-on every platform, so absolute paths are the safe choice.
+Merge into `~/.claude/settings.json`, replacing `YOU` with your username. Hook and
+status line commands run through a shell, so `$HOME` works too; absolute paths are
+just easier to eyeball when a hook misfires.
 
 ```json
 {

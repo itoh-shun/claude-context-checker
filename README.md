@@ -97,6 +97,10 @@ in 52 of them (median error 0.30pt). Guessing the window from the model id inste
 produced errors above 70 points — a CRITICAL warning at 19% actual usage. So this
 plugin does not guess. No declared window, no percentage.
 
+That sample came from a single account whose sessions all ran on a 1M window, so it
+validates the token formula rather than any range of window sizes. Which is the point:
+the formula is dependable, the denominator is what you have to supply.
+
 ## Testing
 
 ```

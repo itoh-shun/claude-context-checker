@@ -129,6 +129,35 @@ for f in hooks/hooks.json .claude-plugin/plugin.json .claude-plugin/marketplace.
   python3 -c "import json;json.load(open('$PLUGIN/$f'))" 2>/dev/null && ok "$f valid" || bad "$f valid"
 done
 
+echo "== 13. every hooks.json command runs as written, with \$CLAUDE_PLUGIN_ROOT expanded =="
+# The wiring is only real if the command string survives shell expansion. Run each
+# one exactly as Claude Code would, with the variable set, and require exit 0.
+mapfile -t CMDS < <(python3 - "$PLUGIN/hooks/hooks.json" <<'PY'
+import json, sys
+spec = json.load(open(sys.argv[1]))["hooks"]
+for event, groups in spec.items():
+    for g in groups:
+        for h in g.get("hooks", []):
+            print(f"{event}\t{h['command']}")
+PY
+)
+[[ ${#CMDS[@]} -eq 3 ]] && ok "3 hook commands declared" || bad "3 hook commands declared (got ${#CMDS[@]})"
+for entry in "${CMDS[@]}"; do
+  event=${entry%%$'\t'*}
+  cmd=${entry#*$'\t'}
+  OUT=$(CLAUDE_PLUGIN_ROOT="$PLUGIN" sh -c "echo '{\"session_id\":\"wiring\",\"transcript_path\":\"$TRANSCRIPT\",\"trigger\":\"manual\"}' | $cmd" 2>&1)
+  rc=$?
+  if [[ $rc -eq 0 && "$OUT" != *"can't open file"* && "$OUT" != *"No such file"* ]]; then
+    ok "$event command executes"
+  else
+    bad "$event command executes (rc=$rc, out=${OUT:0:80})"
+  fi
+done
+# and prove the substitution is load-bearing: without the variable it must fail
+UNSET_OUT=$(sh -c "echo '{}' | $(printf '%s' "${CMDS[0]#*$'\t'}")" 2>&1)
+[[ "$UNSET_OUT" == *"can't open file"* || "$UNSET_OUT" == *"No such file"* ]] \
+  && ok "path really comes from \$CLAUDE_PLUGIN_ROOT" || bad "path really comes from \$CLAUDE_PLUGIN_ROOT"
+
 echo
 rm -rf "$SANDBOX"
 if [[ $fail -eq 0 ]]; then echo "ALL PASS"; else echo "FAILURES PRESENT"; fi

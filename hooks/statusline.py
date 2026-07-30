@@ -11,6 +11,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Keep the plugin install directory free of __pycache__ noise.
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import (  # noqa: E402
     level_for,
