@@ -20,6 +20,13 @@ DEFAULT_NOTICE_PCT = 60.0
 DEFAULT_WARN_PCT = 75.0
 DEFAULT_STATE_TTL_DAYS = 14
 
+# When auto-compact is set to fire early, warning at a fixed 60/75 can put the
+# critical warning *after* the compaction it exists to pre-empt. So the defaults
+# follow the auto-compact point instead, landing this far ahead of it.
+NOTICE_LEAD_PCT = 15.0
+WARN_LEAD_PCT = 5.0
+AUTOCOMPACT_ENV = "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"
+
 # There is deliberately no default context window size. The transcript records
 # token counts but never the window they are measured against, and the window
 # is not derivable from the model id — `claude-sonnet-5` runs with a 200k window
@@ -29,19 +36,46 @@ DEFAULT_STATE_TTL_DAYS = 14
 CONTEXT_WINDOW_ENV = "CONTEXT_CHECKER_CONTEXT_WINDOW"
 
 
-def _env_float(name: str, default: float) -> float:
+def _env_float_opt(name: str) -> float | None:
     try:
         return float(os.environ[name])
     except (KeyError, TypeError, ValueError):
-        return default
+        return None
+
+
+def _env_float(name: str, default: float) -> float:
+    value = _env_float_opt(name)
+    return default if value is None else value
+
+
+def autocompact_pct() -> float | None:
+    """The usage percentage at which Claude Code will auto-compact, if declared.
+
+    Only the override is knowable from here: Claude Code does not publish its
+    built-in threshold to hooks, so an unset variable means "unknown", not "off".
+    """
+    value = _env_float_opt(AUTOCOMPACT_ENV)
+    if value is None or not 0 < value <= 100:
+        return None
+    return value
+
+
+def _threshold(explicit_env: str, lead: float, fallback: float) -> float:
+    explicit = _env_float_opt(explicit_env)
+    if explicit is not None:
+        return explicit
+    auto = autocompact_pct()
+    if auto is not None:
+        return max(0.0, auto - lead)
+    return fallback
 
 
 def notice_threshold() -> float:
-    return _env_float("CONTEXT_CHECKER_NOTICE_PCT", DEFAULT_NOTICE_PCT)
+    return _threshold("CONTEXT_CHECKER_NOTICE_PCT", NOTICE_LEAD_PCT, DEFAULT_NOTICE_PCT)
 
 
 def warn_threshold() -> float:
-    return _env_float("CONTEXT_CHECKER_WARN_PCT", DEFAULT_WARN_PCT)
+    return _threshold("CONTEXT_CHECKER_WARN_PCT", WARN_LEAD_PCT, DEFAULT_WARN_PCT)
 
 
 def state_ttl_days() -> float:
@@ -58,6 +92,19 @@ def level_for(used_pct: float) -> str:
 
 
 LEVEL_ORDER = {"ok": 0, "notice": 1, "warn": 2}
+
+# Shared by both status lines so a subagent row and the main bar mean the same
+# thing by "WARN".
+MARKERS = {"ok": "OK", "notice": "WARN", "warn": "CRIT"}
+
+
+def marker_for(used_pct: float) -> str:
+    return MARKERS[level_for(used_pct)]
+
+
+def format_pct(value: float) -> str:
+    """Render a percentage without a pointless trailing .0."""
+    return f"{value:g}"
 
 
 def read_json(path: Path) -> dict:

@@ -14,6 +14,8 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import (  # noqa: E402
     LEVEL_ORDER,
+    autocompact_pct,
+    format_pct,
     level_for,
     notice_threshold,
     read_json,
@@ -61,19 +63,22 @@ def main() -> None:
         return
 
     qualifier = " (estimated from transcript)" if source == "transcript" else ""
+    auto = autocompact_pct()
+    auto_note = f" Auto-compact fires at {format_pct(auto)}%." if auto is not None else ""
 
     if level == "warn":
         print(
-            f"[context-checker] CRITICAL: context usage {used}%{qualifier} "
-            f"(>= {warn_threshold()}%). Auto-compact is close. Use the "
+            f"[context-checker] CRITICAL: context usage {format_pct(used)}%{qualifier} "
+            f"(>= {format_pct(warn_threshold())}%).{auto_note} Use the "
             "`context-checkpoint` skill to write a checkpoint now, then consider "
             "running `/compact <instructions>` manually so you control what survives."
         )
     elif level == "notice":
         print(
-            f"[context-checker] NOTICE: context usage {used}%{qualifier} "
-            f"(>= {notice_threshold()}%). Start wrapping up the current sub-task; "
-            "the `context-checkpoint` skill can prepare a `/compact` instruction string."
+            f"[context-checker] NOTICE: context usage {format_pct(used)}%{qualifier} "
+            f"(>= {format_pct(notice_threshold())}%).{auto_note} Start wrapping up the "
+            "current sub-task; the `context-checkpoint` skill can prepare a `/compact` "
+            "instruction string."
         )
 
 

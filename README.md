@@ -12,30 +12,45 @@ transcript is summarized away — so a compaction never silently drops the threa
 
 | Component | Event | Behaviour |
 | --- | --- | --- |
-| `statusline.py` | status line | Renders `[OK] ctx 24% \| Opus 5 \| my-project` and records the usage figure for the hooks to read |
-| `prompt-submit.py` | `UserPromptSubmit` | Injects one warning when usage crosses 60%, one more when it crosses 75%. Never repeats within the same level |
+| `statusline.py` | status line | Renders context usage, the auto-compact point, model, effort, and plan limits — and records the usage figure for the hooks to read |
+| `subagent-statusline.py` | subagent status line | Replaces each agent row's raw token count with a percentage of that agent's own context window |
+| `prompt-submit.py` | `UserPromptSubmit` | Injects one warning per threshold crossing. Never repeats within the same level |
 | `pre-compact.py` | `PreCompact` | Writes a markdown checkpoint: recent user messages verbatim, truncated assistant replies, files edited, commands run |
 | `post-compact.py` | `PostCompact` | Tells Claude where that checkpoint is, so anything the summary dropped can be recovered |
 | `context-checkpoint` | skill | Prepares a structured checkpoint and drafts a `/compact <instructions>` string. You decide whether to run it |
 
 Python 3 standard library only. No dependencies, no network calls.
 
+```
+[WARN] ctx 62% → auto 70% | Opus 5 (1M context) | high·think | 5h 27% · 7d 35% | my-project
+```
+
+```
+[OK]   Explore · search auth flow · 6%
+[WARN] code-reviewer · review diff · 62%
+```
+
+The second block is the agent panel. `48.1k` tokens tells you nothing on its own —
+it is comfortable on a 1M window and nearly half of a 200k one — so each row shows
+the ratio instead, using the same thresholds as the main bar.
+
 ## Install
 
 ### 1. Add the plugin
 
 ```
-/plugin marketplace add <your-github-user>/context-checker
+/plugin marketplace add itoh-shun/claude-context-checker
 /plugin install context-checker@context-checker
 ```
 
-That wires the three hooks and the skill.
+That wires the three hooks, the skill, and the subagent status line.
 
-### 2. Add the status line (required, manual)
+### 2. Add the main status line (required, manual)
 
-**Claude Code plugins cannot install a status line** — only the `subagentStatusLine`
-key is supported in plugin settings, not the main one. Without it the hooks have no
-usage figure to act on, so add this to `~/.claude/settings.json` yourself:
+**Claude Code plugins cannot install the main status line** — plugin settings support
+only the `subagentStatusLine` key, which is why the agent rows work out of the box and
+the main bar does not. Without it the hooks have no usage figure to act on, so add this
+to `~/.claude/settings.json` yourself:
 
 ```json
 {
@@ -59,14 +74,29 @@ All optional, read from the environment (`env` in `settings.json` works):
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `CONTEXT_CHECKER_NOTICE_PCT` | `60` | First warning threshold |
-| `CONTEXT_CHECKER_WARN_PCT` | `75` | Critical warning threshold |
+| `CONTEXT_CHECKER_NOTICE_PCT` | `60`, or 15 below auto-compact | First warning threshold |
+| `CONTEXT_CHECKER_WARN_PCT` | `75`, or 5 below auto-compact | Critical warning threshold |
 | `CONTEXT_CHECKER_STATE_TTL_DAYS` | `14` | Delete per-session state files older than this |
 | `CONTEXT_CHECKER_CONTEXT_WINDOW` | unset | Context window size in tokens, for the transcript fallback |
+| `CONTEXT_CHECKER_STATUSLINE_SEGMENTS` | `ctx,model,session,limits,cwd` | Which segments the status line shows, in order |
+| `CONTEXT_CHECKER_RATE_LIMIT_MIN_PCT` | `0` | Hide a plan-limit window until it reaches this percentage |
 
-If you set `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`, auto-compact fires earlier than the
-default. Set `CONTEXT_CHECKER_WARN_PCT` below it, or the critical warning arrives
-after the compaction it was meant to prevent.
+### Following the auto-compact point
+
+Warning at a fixed 75% is useless if auto-compact fires at 70% — the critical warning
+arrives after the compaction it exists to pre-empt. So when
+`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` is set, the thresholds move with it: notice at
+15 points below, critical at 5 points below. Setting either `CONTEXT_CHECKER_*_PCT`
+variable explicitly overrides that.
+
+The status line shows the point it is working against:
+
+```
+[WARN] ctx 62% → auto 70% | ...
+```
+
+Claude Code does not publish its built-in auto-compact threshold to hooks, so with
+the variable unset the arrow is omitted and the stock 60/75 defaults apply.
 
 ## Files written
 
@@ -107,13 +137,20 @@ the formula is dependable, the denominator is what you have to supply.
 bash tests/smoke.sh
 ```
 
-Runs every hook against mock payloads in a throwaway `HOME`: rendering, threshold
-crossing and non-repetition, the transcript fallback with and without a declared
-window, sidechain exclusion, checkpoint contents, state pruning, and malformed stdin.
+62 assertions against mock payloads in a throwaway `HOME`: rendering and segment
+selection, threshold crossing and non-repetition, thresholds derived from the
+auto-compact point, the transcript fallback with and without a declared window,
+sidechain exclusion, subagent row rendering and column budget, checkpoint contents,
+state pruning, and malformed stdin. It also runs each command string from
+`hooks.json` and `settings.json` through a shell to prove `${CLAUDE_PLUGIN_ROOT}`
+expands where it is used.
 
 ## Limitations
 
-- The status line must be installed by hand (a Claude Code constraint, not a choice).
+- The main status line must be installed by hand (a Claude Code constraint, not a
+  choice); the subagent one ships with the plugin.
+- Per-agent percentages need Claude Code v2.1.205 or later. Rows without a resolved
+  model keep their default rendering rather than showing a made-up number.
 - `PreCompact` reads the transcript, so a checkpoint reflects what was written to
   disk, not in-flight state.
 - Hooks cannot invoke skills, so the `context-checkpoint` skill is triggered by the

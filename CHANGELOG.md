@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.2.0 — unreleased
+
+### Added
+
+- **Subagent status line.** Each agent row shows a percentage of that agent's own
+  context window instead of a raw token count, which cannot be read without knowing
+  the window it sits in. Shipped in the plugin's `settings.json`, so unlike the main
+  status line it needs no manual setup. Rows whose model is not resolved yet keep
+  their default rendering rather than showing an invented figure.
+- **Thresholds follow the auto-compact point.** With `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`
+  set, notice fires 15 points below it and critical 5 points below, so the critical
+  warning can no longer arrive after the compaction it exists to pre-empt. The status
+  line shows the point it is working against (`ctx 62% → auto 70%`), and an explicit
+  `CONTEXT_CHECKER_*_PCT` still wins.
+- **Session state and plan limits in the status line**: effort level, extended
+  thinking, fast mode, and the 5-hour / 7-day usage windows. Segments are selectable
+  via `CONTEXT_CHECKER_STATUSLINE_SEGMENTS`; plan limits can be hidden until they
+  matter with `CONTEXT_CHECKER_RATE_LIMIT_MIN_PCT`.
+- The smoke test now runs the command strings from both `hooks.json` and
+  `settings.json` through a shell with `${CLAUDE_PLUGIN_ROOT}` set, and asserts they
+  fail without it — proving the substitution is load-bearing rather than incidental.
+
+### Changed
+
+- Percentages render without a trailing `.0` (`80%`, not `80.0%`).
+- The smoke test clears `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` and every
+  `CONTEXT_CHECKER_*` variable, so a tester's own configuration cannot change results.
+
+### Notes
+
+- Advisor state was considered and dropped: it does not appear anywhere in the status
+  line payload, which was confirmed by capturing a live one rather than reading docs.
+  The same capture confirmed effort, thinking, fast mode, and rate limits are present.
+
 ## 0.1.0 — unreleased
 
 First packaged release, extracted from a personal `~/.claude/hooks/context-monitor`

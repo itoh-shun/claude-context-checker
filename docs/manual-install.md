@@ -6,7 +6,7 @@ yourself, or if you want to run it from a checkout while making changes.
 ## 1. Clone
 
 ```bash
-git clone https://github.com/<your-github-user>/context-checker.git ~/.claude/context-checker
+git clone https://github.com/itoh-shun/claude-context-checker.git ~/.claude/context-checker
 ```
 
 Any path works; the scripts locate their own directory. The examples below assume
