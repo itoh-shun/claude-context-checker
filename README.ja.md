@@ -1,4 +1,4 @@
-# context-checker
+# claude-context-checker
 
 コンテキスト残量を見張り、圧縮を生き延びる。
 
@@ -39,7 +39,7 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 
 ```
 /plugin marketplace add itoh-shun/claude-context-checker
-/plugin install context-checker@context-checker
+/plugin install claude-context-checker@claude-context-checker
 ```
 
 これで3つのフック・skill・subagent status line が有効になる。
@@ -47,15 +47,15 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 ### 2. メインの status line を追加（必須・手動）
 
 **Claude Code のプラグインはメインの status line を提供できない** — プラグインの settings で
-サポートされるのは `subagentStatusLine` だけ。エージェント行が最初から動いてメインバーが
-動かないのはこのため。status line がないとフックが読む使用率が存在しないので、
+サポートされるのは `subagentStatusLine` だけ。エージェント行の設定が同梱でき、メインバーが
+同梱できないのはこのため。status line がないとフックが読む使用率が存在しないので、
 `~/.claude/settings.json` に自分で追記する：
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 \"$HOME/.claude/plugins/marketplaces/context-checker/hooks/statusline.py\""
+    "command": "python3 \"$HOME/.claude/plugins/marketplaces/claude-context-checker/hooks/statusline.py\""
   }
 }
 ```
@@ -144,7 +144,10 @@ bash tests/smoke.sh
 ## 制約
 
 - メインの status line は手動設定が必要（Claude Code 側の制約であって、設計上の選択ではない）。
-  subagent 側はプラグインに同梱される
+  subagent 側はプラグインの `settings.json` で宣言される
+- subagent status line はスクリプトとコマンド文字列のレベルでは検証済みだが、
+  **実際のエージェントパネルでの描画は未確認**。Claude Code がプラグインの `settings.json` を
+  読まない場合、各行は既定の描画に戻るだけで、壊れはしない（割合が出ないだけ）
 - エージェントごとの割合表示には Claude Code v2.1.205 以降が必要。モデル未解決の行は
   でっちあげた数値を出さず、既定の描画のままにする
 - `PreCompact` は transcript を読むので、checkpoint に入るのはディスクに書かれた内容まで

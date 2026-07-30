@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.0 — 2026-07-30
+
+### Changed
+
+- **Renamed to `claude-context-checker`**, matching the repository. This changes the
+  install command and is why the version bumps rather than the v0.2.0 tag moving:
+
+  ```
+  /plugin install claude-context-checker@claude-context-checker
+  ```
+
+  Anyone on 0.2.0 needs to uninstall `context-checker@context-checker` and install
+  under the new name.
+
+  Runtime paths and environment variables keep the `context-checker` prefix
+  (`~/.claude/tmp/context-checker/`, `CONTEXT_CHECKER_*`), so existing state and
+  configuration survive the rename.
+
+### Notes
+
+- The subagent status line is now documented as unverified in a live agent panel.
+  Its script and its declared command string are covered by tests, but whether
+  Claude Code loads a plugin's `settings.json` was not confirmed — `claude --debug`
+  emits no plugin-load lines to check against. If it is not picked up, agent rows
+  keep their default rendering; nothing breaks.
+
 ## 0.2.0 — 2026-07-30
 
 ### Added

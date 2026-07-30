@@ -6,11 +6,11 @@ yourself, or if you want to run it from a checkout while making changes.
 ## 1. Clone
 
 ```bash
-git clone https://github.com/itoh-shun/claude-context-checker.git ~/.claude/context-checker
+git clone https://github.com/itoh-shun/claude-context-checker.git ~/.claude/claude-context-checker
 ```
 
 Any path works; the scripts locate their own directory. The examples below assume
-`~/.claude/context-checker`.
+`~/.claude/claude-context-checker`.
 
 ## 2. Wire the status line and hooks
 
@@ -22,7 +22,7 @@ just easier to eyeball when a hook misfires.
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 /home/YOU/.claude/context-checker/hooks/statusline.py"
+    "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/statusline.py"
   },
   "hooks": {
     "UserPromptSubmit": [
@@ -30,7 +30,7 @@ just easier to eyeball when a hook misfires.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/YOU/.claude/context-checker/hooks/prompt-submit.py"
+            "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/prompt-submit.py"
           }
         ]
       }
@@ -41,7 +41,7 @@ just easier to eyeball when a hook misfires.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/YOU/.claude/context-checker/hooks/pre-compact.py"
+            "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/pre-compact.py"
           }
         ]
       }
@@ -52,7 +52,7 @@ just easier to eyeball when a hook misfires.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/YOU/.claude/context-checker/hooks/post-compact.py"
+            "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/post-compact.py"
           }
         ]
       }
@@ -68,7 +68,7 @@ replacing them — an existing `UserPromptSubmit` entry and this one can coexist
 
 ```bash
 mkdir -p ~/.claude/skills
-ln -s ~/.claude/context-checker/skills/context-checkpoint ~/.claude/skills/context-checkpoint
+ln -s ~/.claude/claude-context-checker/skills/context-checkpoint ~/.claude/skills/context-checkpoint
 ```
 
 ## 4. Verify

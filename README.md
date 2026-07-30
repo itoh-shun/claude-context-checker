@@ -1,4 +1,4 @@
-# context-checker
+# claude-context-checker
 
 Watch the context window, and survive compaction.
 
@@ -40,7 +40,7 @@ the ratio instead, using the same thresholds as the main bar.
 
 ```
 /plugin marketplace add itoh-shun/claude-context-checker
-/plugin install context-checker@context-checker
+/plugin install claude-context-checker@claude-context-checker
 ```
 
 That wires the three hooks, the skill, and the subagent status line.
@@ -48,15 +48,15 @@ That wires the three hooks, the skill, and the subagent status line.
 ### 2. Add the main status line (required, manual)
 
 **Claude Code plugins cannot install the main status line** — plugin settings support
-only the `subagentStatusLine` key, which is why the agent rows work out of the box and
-the main bar does not. Without it the hooks have no usage figure to act on, so add this
+only the `subagentStatusLine` key, which is why the agent rows are declared for you and
+the main bar is not. Without it the hooks have no usage figure to act on, so add this
 to `~/.claude/settings.json` yourself:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 \"$HOME/.claude/plugins/marketplaces/context-checker/hooks/statusline.py\""
+    "command": "python3 \"$HOME/.claude/plugins/marketplaces/claude-context-checker/hooks/statusline.py\""
   }
 }
 ```
@@ -148,7 +148,11 @@ expands where it is used.
 ## Limitations
 
 - The main status line must be installed by hand (a Claude Code constraint, not a
-  choice); the subagent one ships with the plugin.
+  choice); the subagent one is declared in the plugin's `settings.json`.
+- The subagent status line is verified at the script and command-string level, but
+  has not been observed rendering in a live agent panel. If Claude Code does not pick
+  up the plugin's `settings.json`, the rows fall back to their default rendering —
+  nothing breaks, you just don't get the percentages.
 - Per-agent percentages need Claude Code v2.1.205 or later. Rows without a resolved
   model keep their default rendering rather than showing a made-up number.
 - `PreCompact` reads the transcript, so a checkpoint reflects what was written to
