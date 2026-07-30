@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.5.0 — 2026-07-30
+
+### Fixed
+
+- **`PreCompact` silently stopped firing partway through a session.** Found while
+  verifying checkpoint generation: `/compact` ran, tokens dropped as expected, but no
+  checkpoint file appeared. `pre-compact.py` worked fine invoked directly, so the hook
+  itself was not the problem — `claude --debug` logs showed why:
+
+  ```
+  [DEBUG] Plugin loading errors: Plugin claude-context-checker not found in marketplace sito-plugins
+  ```
+
+  This repo's marketplace had been renamed to `sito-plugins` in 0.4.0. An unrelated
+  plugin (`rig`) independently renamed its own marketplace to the same name the same
+  day. Claude Code keys `known_marketplaces.json` by marketplace name, so whichever
+  repo was (re)added last silently overwrote the other's entry — after that point,
+  this plugin dropped out of every hook-reload cycle, and `PreCompact` (along with
+  every other hook) stopped being invoked. Nothing in this plugin's own code was
+  broken; the install-time name simply stopped resolving to this repo.
+
+### Changed
+
+- **Marketplace renamed back to `claude-context-checker`.** The `sito-plugins` brand
+  now lives canonically in the `rig` repo's marketplace, which lists this plugin as a
+  second entry — so `sito-plugins` still works as an install target
+  (`/plugin marketplace add itoh-shun/rig`), it is just no longer declared here too.
+  Anyone who installed via this repo's own `sito-plugins` marketplace should remove it
+  and re-add via either path in the README.
+- Manual `statusLine` setup docs now point at the `cache/<marketplace>/claude-context-checker/<version>/`
+  path rather than `marketplaces/<marketplace>/`, which resolves to the marketplace
+  repo itself (someone else's code, when installed via a shared marketplace) rather
+  than this plugin's files.
+
 ## 0.4.1 — 2026-07-30
 
 ### Fixed
