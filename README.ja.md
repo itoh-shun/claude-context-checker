@@ -155,7 +155,7 @@ status line の実測値と transcript の両方が残っている実セッシ�
 bash tests/smoke.sh
 ```
 
-使い捨ての `HOME` の下で、モックペイロードに対して68アサーションを実行する。表示と
+使い捨ての `HOME` の下で、モックペイロードに対して73アサーションを実行する。表示と
 セグメント選択、閾値のまたぎと非重複、自動圧縮ポイントからの閾値導出、窓サイズ宣言の
 有無による推定の切り替え、sidechain の除外、subagent 行の描画と桁数制限、checkpoint の
 中身、state の刈り取り、壊れた stdin への耐性。さらに `hooks.json` と `settings.json` の

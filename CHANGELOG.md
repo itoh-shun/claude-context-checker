@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.1 — 2026-07-30
+
+### Fixed
+
+- **Crash on a Japanese Windows console.** Python follows the console code page,
+  which is cp932 there, and cp932 has no `·` (U+00B7) — the separator used in
+  `high·think` and in every subagent row. Printing raised `UnicodeEncodeError` and
+  the hook died:
+
+  ```
+  UnicodeEncodeError: 'cp932' codec can't encode character '\xb7'
+  ```
+
+  This was not limited to the separator: any project directory with a non-ASCII
+  name hit the same wall.
+
+- **Payloads with non-ASCII content were dropped on the way in.** The same code
+  page applies to stdin, so a payload carrying a Japanese directory name or session
+  title failed to decode, json parsing raised, and the hook returned having done
+  nothing — no error, no output, no warning. Found while writing the test for the
+  bug above, which is why the fix covers both directions.
+
+  Hooks now read the raw stdin buffer and decode UTF-8 explicitly, and reconfigure
+  stdout and stderr to UTF-8 with `errors="replace"`, so the console encoding is out
+  of the loop entirely.
+
+  Verified on the Windows machine that reported it, and pinned by five assertions
+  that run the hooks under `PYTHONIOENCODING=cp932` with Japanese payloads.
+
 ## 0.4.0 — 2026-07-30
 
 ### Fixed

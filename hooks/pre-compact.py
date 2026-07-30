@@ -16,7 +16,7 @@ from pathlib import Path
 # Keep the plugin install directory free of __pycache__ noise.
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import CHECKPOINT_DIR  # noqa: E402
+from _common import CHECKPOINT_DIR, read_payload  # noqa: E402
 
 LAST_USER = 6
 LAST_ASSISTANT = 4
@@ -147,9 +147,8 @@ def render(data: dict, session_id: str, trigger: str, custom: str,
 
 
 def main() -> None:
-    try:
-        payload = json.load(sys.stdin)
-    except Exception:
+    payload = read_payload()
+    if payload is None:
         return
 
     session_id = payload.get("session_id") or "unknown"

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -105,6 +106,44 @@ def marker_for(used_pct: float) -> str:
 def format_pct(value: float) -> str:
     """Render a percentage without a pointless trailing .0."""
     return f"{value:g}"
+
+
+def force_utf8_output() -> None:
+    """Emit UTF-8 regardless of the console's code page.
+
+    Python follows the console encoding on Windows, which on a Japanese system is
+    cp932. That cannot represent the separators these lines use, nor a project
+    directory with a non-ASCII name, so printing raised UnicodeEncodeError and the
+    hook died. Claude Code reads this output as UTF-8, so state it explicitly, and
+    keep errors="replace" so an unmappable character degrades a glyph instead of
+    taking down the hook.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
+def read_payload() -> dict | None:
+    """Decode the hook payload from stdin as UTF-8, whatever the console says.
+
+    The same code-page problem applies on the way in: under cp932 a payload
+    carrying a Japanese directory name or session title fails to decode, json
+    parsing raises, and the hook returns without doing anything — no error, no
+    status line, no warning. Reading the raw buffer and decoding explicitly keeps
+    the console encoding out of it entirely.
+    """
+    force_utf8_output()
+    try:
+        buffer = getattr(sys.stdin, "buffer", None)
+        raw = buffer.read().decode("utf-8", errors="replace") if buffer else sys.stdin.read()
+        return json.loads(raw)
+    except Exception:
+        return None
 
 
 def read_json(path: Path) -> dict:

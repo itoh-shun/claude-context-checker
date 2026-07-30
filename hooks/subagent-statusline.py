@@ -18,7 +18,7 @@ from pathlib import Path
 # Keep the plugin install directory free of __pycache__ noise.
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import format_pct, marker_for  # noqa: E402
+from _common import format_pct, marker_for, read_payload  # noqa: E402
 
 MIN_COLUMNS = 24
 SEPARATOR = " · "
@@ -58,9 +58,8 @@ def render(task: dict, pct: float, columns: int) -> str:
 
 
 def main() -> None:
-    try:
-        payload = json.load(sys.stdin)
-    except Exception:
+    payload = read_payload()
+    if payload is None:
         return
 
     tasks = payload.get("tasks")

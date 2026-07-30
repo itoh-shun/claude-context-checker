@@ -282,6 +282,39 @@ EMPTY="$SANDBOX/empty"; mkdir -p "$EMPTY"
 PATH="$EMPTY" sh "$RUN" "$PLUGIN/hooks/statusline.py" </dev/null >/dev/null 2>&1
 [[ $? -eq 127 ]] && ok "reports when no interpreter exists" || bad "reports when no interpreter exists"
 
+echo "== 19. non-UTF-8 console (Windows cp932) =="
+# Regression: on a Japanese Windows console Python defaults to cp932, which cannot
+# encode the middle dot these lines use, nor a project directory with a Japanese
+# name. Printing raised UnicodeEncodeError and the hook died; on the way in, the
+# payload failed to decode and the hook silently did nothing.
+JP="{\"session_id\":\"cp932\",\"context_window\":{\"used_percentage\":33},\"model\":{\"id\":\"m\",\"display_name\":\"Opus 5\"},\"workspace\":{\"current_dir\":\"/home/u/日本語プロジェクト\"},\"effort\":{\"level\":\"high\"},\"thinking\":{\"enabled\":true}}"
+OUT=$(echo "$JP" | PYTHONIOENCODING=cp932 python3 "$PLUGIN/hooks/statusline.py" 2>&1)
+echo "  output: $OUT"
+[[ "$OUT" == "[OK] ctx 33% | Opus 5 | high·think | 日本語プロジェクト" ]] \
+  && ok "statusline survives cp932 in and out" || bad "statusline survives cp932 (got: $OUT)"
+
+# the state file must still be readable UTF-8, not mangled by the console encoding
+python3 -c "
+import json
+d=json.load(open('$HOME/.claude/tmp/context-checker/cp932.json', encoding='utf-8'))
+assert d['cwd'].endswith('日本語プロジェクト'), d['cwd']
+" && ok "state file keeps UTF-8" || bad "state file keeps UTF-8"
+
+OUT=$(echo "{\"session_id\":\"cp932\",\"transcript_path\":\"$TRANSCRIPT\"}" | PYTHONIOENCODING=cp932 python3 "$PLUGIN/hooks/prompt-submit.py" 2>&1)
+[[ "$OUT" != *"UnicodeEncodeError"* && "$OUT" != *"Traceback"* ]] \
+  && ok "prompt-submit survives cp932" || bad "prompt-submit survives cp932"
+
+SUBJP="{\"columns\":80,\"tasks\":[{\"id\":\"t1\",\"name\":\"探索\",\"description\":\"認証フローを調べる\",\"tokenCount\":62000,\"contextWindowSize\":1000000}]}"
+OUT=$(echo "$SUBJP" | PYTHONIOENCODING=cp932 python3 "$PLUGIN/hooks/subagent-statusline.py" 2>&1)
+echo "  subagent: $OUT"
+echo "$OUT" | grep -q '探索 · 認証フローを調べる · 6.2%' \
+  && ok "subagent row survives cp932" || bad "subagent row survives cp932"
+
+OUT=$(echo "{\"session_id\":\"cp932jp\",\"trigger\":\"manual\",\"transcript_path\":\"$TRANSCRIPT\"}" | PYTHONIOENCODING=cp932 python3 "$PLUGIN/hooks/pre-compact.py" 2>&1)
+CKJP=$(cat "$HOME/.claude/checkpoints/context-checker/cp932jp.latest" 2>/dev/null)
+[[ -f "$CKJP" ]] && grep -q "最初の依頼です" "$CKJP" \
+  && ok "pre-compact writes UTF-8 under cp932" || bad "pre-compact writes UTF-8 under cp932"
+
 echo
 rm -rf "$SANDBOX"
 if [[ $fail -eq 0 ]]; then echo "ALL PASS"; else echo "FAILURES PRESENT"; fi

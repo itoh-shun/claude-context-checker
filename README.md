@@ -158,7 +158,7 @@ the formula is dependable, the denominator is what you have to supply.
 bash tests/smoke.sh
 ```
 
-68 assertions against mock payloads in a throwaway `HOME`: rendering and segment
+73 assertions against mock payloads in a throwaway `HOME`: rendering and segment
 selection, threshold crossing and non-repetition, thresholds derived from the
 auto-compact point, the transcript fallback with and without a declared window,
 sidechain exclusion, subagent row rendering and column budget, checkpoint contents,

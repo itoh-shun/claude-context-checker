@@ -19,6 +19,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import (  # noqa: E402
+    read_payload,
     autocompact_pct,
     format_pct,
     marker_for,
@@ -89,9 +90,8 @@ def limits_segment(payload: dict) -> str:
 
 
 def main() -> None:
-    try:
-        payload = json.load(sys.stdin)
-    except Exception:
+    payload = read_payload()
+    if payload is None:
         print("")
         return
 
