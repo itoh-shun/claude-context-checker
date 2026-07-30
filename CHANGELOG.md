@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — unreleased
+## 0.2.0 — 2026-07-30
 
 ### Added
 
@@ -34,7 +34,7 @@
   line payload, which was confirmed by capturing a live one rather than reading docs.
   The same capture confirmed effort, thinking, fast mode, and rate limits are present.
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-07-30
 
 First packaged release, extracted from a personal `~/.claude/hooks/context-monitor`
 setup where only the status line had ever been wired up.
