@@ -56,11 +56,15 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 >
 > さらにアップグレード: 共有 `sito-plugins` マーケットプレイスは以前 `itoh-shun/rig`（`rig`
 > プラグイン自体もホストしているリポジトリ）にあった。マーケットプレイス定義だけを持つ専用の
-> `itoh-shun/sito-plugins` リポジトリに移した。一部のクライアント（Cowork）が、マーケットプレイス
-> 自身と同じリポジトリを指すプラグインを、別プラグインと併記した際にリストから除外してしまう
-> 問題があったため。`itoh-shun/rig` をこのマーケットプレイス用に追加していた場合は削除し、
-> 代わりに `itoh-shun/sito-plugins` を追加し直してほしい（インストールコマンド自体
+> `itoh-shun/sito-plugins` リポジトリに移した。これにより、`rig`と本プラグインがCLI上で
+> `known_marketplaces.json` の同じマーケットプレイス名を取り合う競合がなくなる。
+> `itoh-shun/rig` をこのマーケットプレイス用に追加していた場合は削除し、代わりに
+> `itoh-shun/sito-plugins` を追加し直してほしい（インストールコマンド自体
 > `claude-context-checker@sito-plugins` は変わらない）。
+>
+> 別件として、`rig`は現在Coworkのプラグイン一覧にどのmarketplace経由でも表示されない問題が
+> ある。原因は`rig`自身のリポジトリにある`bin/`ディレクトリ（詳細は`rig`のCHANGELOGの1.28.2）で、
+> 上記のマーケットプレイス移行とは無関係。本プラグインは`bin/`を持たないため影響を受けない。
 
 これで3つのフック・skill・subagent status line が有効になる。
 

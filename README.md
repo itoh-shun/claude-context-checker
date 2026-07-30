@@ -57,11 +57,16 @@ the ratio instead, using the same thresholds as the main bar.
 >
 > Upgrading again: the shared `sito-plugins` marketplace used to live in `itoh-shun/rig`
 > (which also hosts the `rig` plugin itself). It moved to a dedicated
-> `itoh-shun/sito-plugins` repo that holds only the marketplace manifest — some clients
-> (Cowork) failed to list a plugin whose source was the same repo as the marketplace
-> that listed it, alongside a sibling plugin that wasn't. If you added
-> `itoh-shun/rig` for this marketplace, remove it and re-add `itoh-shun/sito-plugins`
-> instead; the install command (`claude-context-checker@sito-plugins`) is unchanged.
+> `itoh-shun/sito-plugins` repo that holds only the marketplace manifest, so `rig` and
+> this plugin stop racing to claim the same marketplace name in `known_marketplaces.json`
+> on the CLI. If you added `itoh-shun/rig` for this marketplace, remove it and re-add
+> `itoh-shun/sito-plugins` instead; the install command
+> (`claude-context-checker@sito-plugins`) is unchanged.
+>
+> Separately: `rig` currently fails to appear in Cowork's plugin browser at all, under
+> any marketplace. That turned out to be caused by a `bin/` directory in `rig`'s own
+> repo (see `rig`'s CHANGELOG 1.28.2) — unrelated to the marketplace move above, and this
+> plugin (which ships no `bin/`) is unaffected.
 
 That wires the three hooks, the skill, and the subagent status line.
 

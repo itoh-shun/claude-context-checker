@@ -1,6 +1,6 @@
 {
   "name": "claude-context-checker",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Watch the context window and survive compaction. A status line renders live context usage alongside the auto-compact point, effort level, and plan limits; the subagent status line replaces each agent's raw token count with a percentage of its own window. A UserPromptSubmit hook warns Claude once per threshold crossing, with thresholds that follow the auto-compact point instead of sitting behind it. A PreCompact hook writes a markdown checkpoint of recent user messages, files touched, and commands run, and a PostCompact hook points Claude back at it so anything the summary dropped can be recovered. Ships the context-checkpoint skill for preparing a deliberate /compact instead of letting auto-compact decide what to lose. Python 3 stdlib only, no dependencies.",
   "author": {
     "name": "sito"

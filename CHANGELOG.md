@@ -1,15 +1,32 @@
 # Changelog
 
+## 0.5.2 — 2026-07-30
+
+### Corrected
+
+- **0.5.1's stated reason for moving the shared marketplace was wrong.** It claimed
+  Cowork excluded a plugin whose source resolves to the same repo as the marketplace
+  listing it. Controlled testing (see `rig`'s CHANGELOG 1.28.2) disproved this: a
+  throwaway repo holding `rig`'s exact content, referenced only by external URL from a
+  marketplace that didn't share its repo, still failed in Cowork. The real cause is a
+  top-level directory named `bin/` in `rig`'s own repo — unrelated to this plugin, to
+  the marketplace move, or to self-reference. This plugin has no `bin/` directory and
+  was never affected. The marketplace move itself (0.5.1, below) stands regardless —
+  the real reason was a CLI-side `known_marketplaces.json` name collision, not Cowork.
+
 ## 0.5.1 — 2026-07-30
 
 ### Fixed
 
-- **The shared `sito-plugins` marketplace didn't list `rig` in Cowork.** It lived in
-  `itoh-shun/rig`, listing itself (source `./`, i.e. the marketplace's own repo)
-  alongside this plugin (an external git URL). Cowork's plugin browser rendered only
-  the externally-sourced entry — a marketplace's own repo, listed as one of its own
-  plugins, silently dropped out whenever a sibling plugin didn't share that trait. A
-  single-plugin marketplace hosting itself (this repo, unchanged) was unaffected.
+- **The shared `sito-plugins` marketplace was renamed.** ~~It lived in `itoh-shun/rig`,
+  listing itself (source `./`, i.e. the marketplace's own repo) alongside this plugin
+  (an external git URL). Cowork's plugin browser rendered only the externally-sourced
+  entry — a marketplace's own repo, listed as one of its own plugins, silently dropped
+  out whenever a sibling plugin didn't share that trait.~~ **Corrected in 0.5.2: this
+  reasoning was wrong.** The real, still-valid reason: `rig` and this plugin had
+  independently renamed their own marketplaces to `sito-plugins` on the same day, and
+  Claude Code keys `known_marketplaces.json` by that name, so whichever was added last
+  on the CLI silently overwrote the other's registration.
 
 ### Changed
 
