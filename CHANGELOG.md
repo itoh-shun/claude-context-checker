@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.1 — 2026-07-30
+
+### Fixed
+
+- **The shared `sito-plugins` marketplace didn't list `rig` in Cowork.** It lived in
+  `itoh-shun/rig`, listing itself (source `./`, i.e. the marketplace's own repo)
+  alongside this plugin (an external git URL). Cowork's plugin browser rendered only
+  the externally-sourced entry — a marketplace's own repo, listed as one of its own
+  plugins, silently dropped out whenever a sibling plugin didn't share that trait. A
+  single-plugin marketplace hosting itself (this repo, unchanged) was unaffected.
+
+### Changed
+
+- **The shared marketplace moved to a dedicated `itoh-shun/sito-plugins` repo** that
+  holds nothing but a manifest listing `rig` and `claude-context-checker`, both by
+  explicit external URL — so neither ever again shares a repo with the marketplace that
+  lists it. `rig`'s own repo now hosts only its own single-plugin marketplace
+  (`rig@rig`); see its README for details. The install command for this plugin is
+  unchanged (`claude-context-checker@sito-plugins`) — only the marketplace source moves,
+  from `itoh-shun/rig` to `itoh-shun/sito-plugins`.
+
 ## 0.5.0 — 2026-07-30
 
 ### Fixed

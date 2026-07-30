@@ -40,7 +40,7 @@ the ratio instead, using the same thresholds as the main bar.
 
 ```
 # via the shared sito-plugins marketplace (recommended — also hosts the rig plugin)
-/plugin marketplace add itoh-shun/rig
+/plugin marketplace add itoh-shun/sito-plugins
 /plugin install claude-context-checker@sito-plugins
 
 # or directly from this repo, no shared marketplace involved
@@ -54,6 +54,14 @@ the ratio instead, using the same thresholds as the main bar.
 > took over the other's registration, and this plugin's hooks stopped firing. If you
 > installed via `itoh-shun/claude-context-checker` before, remove that marketplace and
 > re-add it with one of the two commands above.
+>
+> Upgrading again: the shared `sito-plugins` marketplace used to live in `itoh-shun/rig`
+> (which also hosts the `rig` plugin itself). It moved to a dedicated
+> `itoh-shun/sito-plugins` repo that holds only the marketplace manifest — some clients
+> (Cowork) failed to list a plugin whose source was the same repo as the marketplace
+> that listed it, alongside a sibling plugin that wasn't. If you added
+> `itoh-shun/rig` for this marketplace, remove it and re-add `itoh-shun/sito-plugins`
+> instead; the install command (`claude-context-checker@sito-plugins`) is unchanged.
 
 That wires the three hooks, the skill, and the subagent status line.
 

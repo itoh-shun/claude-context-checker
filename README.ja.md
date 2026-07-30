@@ -39,7 +39,7 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 
 ```
 # 共有マーケットプレイス sito-plugins 経由（推奨・rig プラグインも同居）
-/plugin marketplace add itoh-shun/rig
+/plugin marketplace add itoh-shun/sito-plugins
 /plugin install claude-context-checker@sito-plugins
 
 # または本リポジトリを直接追加（共有マーケットプレイスを使わない）
@@ -53,6 +53,14 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 > 相手の登録を無言で上書きし、本プラグインのフックが発火しなくなっていた。以前
 > `itoh-shun/claude-context-checker` 経由でインストールしていた場合は、そのマーケットプレイスを
 > 削除し、上記いずれかのコマンドで追加し直してほしい。
+>
+> さらにアップグレード: 共有 `sito-plugins` マーケットプレイスは以前 `itoh-shun/rig`（`rig`
+> プラグイン自体もホストしているリポジトリ）にあった。マーケットプレイス定義だけを持つ専用の
+> `itoh-shun/sito-plugins` リポジトリに移した。一部のクライアント（Cowork）が、マーケットプレイス
+> 自身と同じリポジトリを指すプラグインを、別プラグインと併記した際にリストから除外してしまう
+> 問題があったため。`itoh-shun/rig` をこのマーケットプレイス用に追加していた場合は削除し、
+> 代わりに `itoh-shun/sito-plugins` を追加し直してほしい（インストールコマンド自体
+> `claude-context-checker@sito-plugins` は変わらない）。
 
 これで3つのフック・skill・subagent status line が有効になる。
 
