@@ -1,7 +1,7 @@
 {
-  "name": "claude-context-checker",
+  "name": "sito-plugins",
   "owner": {
-    "name": "itoshun"
+    "name": "sito"
   },
   "plugins": [
     {

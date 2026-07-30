@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.4.0 — 2026-07-30
+
+### Fixed
+
+- **The hooks never ran on Windows.** `python3` there is normally the Microsoft
+  Store alias: it writes `Python was not found` to stderr, exits 49, and executes
+  nothing, while the working interpreter is `python`. Every hook was wired to
+  `python3`, so all three failed with no visible symptom. Measured on a Windows box
+  with Python 3.12.10 installed:
+
+  | Command | Result |
+  | --- | --- |
+  | `python3 statusline.py` | `Python was not found`, exit 49 |
+  | `sh run.sh statusline.py` | renders normally |
+
+  Commands now go through `hooks/run.sh`, which probes `python3`, `python`, then
+  `py`, and honours `CONTEXT_CHECKER_PYTHON` as an explicit override. The probe has
+  to happen before the hook reads stdin — Claude Code pipes the payload in once, so
+  a "try `python3`, fall back to `python`" chain would hand the second attempt an
+  empty stream. That is why this is a launcher rather than a shell one-liner.
+
+  Quoted paths survive in both `C:/...` and `C:\...` form, so the documented Git Bash
+  backslash hazard does not apply here.
+
+### Changed
+
+- **Marketplace rebranded to `sito-plugins`**, so future plugins share one brand:
+
+  ```
+  /plugin marketplace add itoh-shun/claude-context-checker
+  /plugin install claude-context-checker@sito-plugins
+  ```
+
+  The plugin name is unchanged. Anyone on 0.3.0 should remove the old
+  `claude-context-checker` marketplace and re-add it.
+- The documented `statusLine` command now uses `run.sh` too, so the same line works
+  on Windows, Linux, and macOS.
+
+### Added
+
+- Test 18 covers the launcher, including a stub that reproduces the Windows Store
+  alias behaviour (stderr, exit 49, reads no stdin) to prove it is skipped rather
+  than accepted.
+
 ## 0.3.0 — 2026-07-30
 
 ### Changed

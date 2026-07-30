@@ -249,6 +249,39 @@ SUBCMD=$(cat "$SANDBOX/sub.cmd" 2>/dev/null)
 OUT=$(CLAUDE_PLUGIN_ROOT="$PLUGIN" sh -c "echo '$SUB' | $SUBCMD" 2>&1)
 [[ $? -eq 0 && "$OUT" == *'"t1"'* ]] && ok "declared command runs and renders" || bad "declared command runs (${OUT:0:60})"
 
+echo "== 18. run.sh picks a working interpreter =="
+RUN="$PLUGIN/hooks/run.sh"
+STATUS_PAYLOAD="{\"session_id\":\"run\",\"context_window\":{\"used_percentage\":42},\"model\":{\"id\":\"m\",\"display_name\":\"M\"},\"workspace\":{\"current_dir\":\"/home/u/proj\"}}"
+OUT=$(echo "$STATUS_PAYLOAD" | sh "$RUN" "$PLUGIN/hooks/statusline.py")
+[[ "$OUT" == "[OK] ctx 42% | M | proj" ]] && ok "probes and runs" || bad "probes and runs (got: $OUT)"
+
+OUT=$(echo "$STATUS_PAYLOAD" | CONTEXT_CHECKER_PYTHON=$(command -v python3) sh "$RUN" "$PLUGIN/hooks/statusline.py")
+[[ "$OUT" == "[OK] ctx 42% | M | proj" ]] && ok "explicit interpreter honoured" || bad "explicit interpreter honoured"
+
+# A stub that behaves like the Windows Store alias — stderr, non-zero, reads no
+# stdin — must be skipped rather than accepted as a working interpreter.
+STUBDIR="$SANDBOX/stub"; mkdir -p "$STUBDIR"
+cat > "$STUBDIR/python3" <<'STUB'
+#!/bin/sh
+echo "Python was not found; run without arguments to install from the Microsoft Store" >&2
+exit 49
+STUB
+chmod +x "$STUBDIR/python3"
+ln -sf "$(command -v python3)" "$STUBDIR/python"
+OUT=$(echo "$STATUS_PAYLOAD" | PATH="$STUBDIR:/usr/bin:/bin" sh "$RUN" "$PLUGIN/hooks/statusline.py" 2>/dev/null)
+[[ "$OUT" == "[OK] ctx 42% | M | proj" ]] && ok "skips a non-working python3 stub" \
+  || bad "skips a non-working python3 stub (got: $OUT)"
+
+echo "not-json" | sh "$RUN" "$PLUGIN/hooks/statusline.py" >/dev/null 2>&1
+[[ $? -eq 0 ]] && ok "launcher passes through hook exit code" || bad "launcher passes through hook exit code"
+
+sh "$RUN" >/dev/null 2>&1
+[[ $? -eq 2 ]] && ok "missing argument is an error" || bad "missing argument is an error"
+
+EMPTY="$SANDBOX/empty"; mkdir -p "$EMPTY"
+PATH="$EMPTY" sh "$RUN" "$PLUGIN/hooks/statusline.py" </dev/null >/dev/null 2>&1
+[[ $? -eq 127 ]] && ok "reports when no interpreter exists" || bad "reports when no interpreter exists"
+
 echo
 rm -rf "$SANDBOX"
 if [[ $fail -eq 0 ]]; then echo "ALL PASS"; else echo "FAILURES PRESENT"; fi

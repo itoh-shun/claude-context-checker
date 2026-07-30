@@ -1,6 +1,6 @@
 {
   "subagentStatusLine": {
     "type": "command",
-    "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/subagent-statusline.py\""
+    "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/subagent-statusline.py\""
   }
 }

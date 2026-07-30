@@ -40,7 +40,7 @@ the ratio instead, using the same thresholds as the main bar.
 
 ```
 /plugin marketplace add itoh-shun/claude-context-checker
-/plugin install claude-context-checker@claude-context-checker
+/plugin install claude-context-checker@sito-plugins
 ```
 
 That wires the three hooks, the skill, and the subagent status line.
@@ -56,13 +56,34 @@ to `~/.claude/settings.json` yourself:
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 \"$HOME/.claude/plugins/marketplaces/claude-context-checker/hooks/statusline.py\""
+    "command": "sh \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/run.sh\" \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/statusline.py\""
   }
 }
 ```
 
 Check the path against your install — `/plugin` shows where the plugin landed.
 See [docs/manual-install.md](docs/manual-install.md) to install without the plugin system.
+
+`run.sh` picks a working interpreter instead of assuming `python3`. On Linux and
+macOS you can call `python3` directly if you prefer; on Windows you should not —
+see below.
+
+### Windows
+
+Windows works, with one catch that is easy to miss. `python3` there is usually the
+Microsoft Store alias: it prints `Python was not found` to stderr, exits 49, and runs
+nothing, while the real interpreter is `python`. A hook wired to `python3` fails
+silently. Measured on a Windows box with Python 3.12.10 installed:
+
+| Command | Result |
+| --- | --- |
+| `python3 statusline.py` | `Python was not found`, exit 49 |
+| `sh run.sh statusline.py` | renders normally |
+
+So use the `run.sh` form above. It probes `python3`, `python`, then `py`, and
+`CONTEXT_CHECKER_PYTHON` overrides the probe with an explicit interpreter path.
+Claude Code routes these commands through Git Bash when it is installed, which is
+what `sh` needs. Forward and backslash paths both work as long as they are quoted.
 
 If you skip this step, the plugin says so once per session rather than failing quietly.
 You can also point `CONTEXT_CHECKER_CONTEXT_WINDOW` at your window size in tokens to
@@ -137,7 +158,7 @@ the formula is dependable, the denominator is what you have to supply.
 bash tests/smoke.sh
 ```
 
-62 assertions against mock payloads in a throwaway `HOME`: rendering and segment
+68 assertions against mock payloads in a throwaway `HOME`: rendering and segment
 selection, threshold crossing and non-repetition, thresholds derived from the
 auto-compact point, the transcript fallback with and without a declared window,
 sidechain exclusion, subagent row rendering and column budget, checkpoint contents,

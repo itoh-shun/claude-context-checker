@@ -22,7 +22,7 @@ just easier to eyeball when a hook misfires.
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/statusline.py"
+    "command": "sh /home/YOU/.claude/claude-context-checker/hooks/run.sh /home/YOU/.claude/claude-context-checker/hooks/statusline.py"
   },
   "hooks": {
     "UserPromptSubmit": [
@@ -30,7 +30,7 @@ just easier to eyeball when a hook misfires.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/prompt-submit.py"
+            "command": "sh /home/YOU/.claude/claude-context-checker/hooks/run.sh /home/YOU/.claude/claude-context-checker/hooks/prompt-submit.py"
           }
         ]
       }
@@ -41,7 +41,7 @@ just easier to eyeball when a hook misfires.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/pre-compact.py"
+            "command": "sh /home/YOU/.claude/claude-context-checker/hooks/run.sh /home/YOU/.claude/claude-context-checker/hooks/pre-compact.py"
           }
         ]
       }
@@ -52,7 +52,7 @@ just easier to eyeball when a hook misfires.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/YOU/.claude/claude-context-checker/hooks/post-compact.py"
+            "command": "sh /home/YOU/.claude/claude-context-checker/hooks/run.sh /home/YOU/.claude/claude-context-checker/hooks/post-compact.py"
           }
         ]
       }

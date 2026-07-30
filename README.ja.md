@@ -39,7 +39,7 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 
 ```
 /plugin marketplace add itoh-shun/claude-context-checker
-/plugin install claude-context-checker@claude-context-checker
+/plugin install claude-context-checker@sito-plugins
 ```
 
 これで3つのフック・skill・subagent status line が有効になる。
@@ -55,13 +55,33 @@ Python 3 標準ライブラリのみ。依存パッケージなし、通信な�
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 \"$HOME/.claude/plugins/marketplaces/claude-context-checker/hooks/statusline.py\""
+    "command": "sh \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/run.sh\" \"$HOME/.claude/plugins/marketplaces/sito-plugins/hooks/statusline.py\""
   }
 }
 ```
 
 パスは実際のインストール先に合わせること（`/plugin` で確認できる）。
 プラグイン機構を使わず導入する場合は [docs/manual-install.md](docs/manual-install.md) を参照。
+
+`run.sh` は `python3` を前提とせず、動くインタプリタを選ぶ。Linux / macOS なら
+`python3` を直接呼んでもよいが、**Windows では避けること**（次節）。
+
+### Windows
+
+Windows でも動くが、見落としやすい罠が1つある。Windows の `python3` はたいてい
+Microsoft Store のエイリアスで、`Python was not found` を stderr に出して exit 49 で
+終わり、何も実行しない。実体は `python` のほう。`python3` で配線したフックは
+無言で失敗する。Python 3.12.10 が入った Windows 機で実測した結果：
+
+| コマンド | 結果 |
+| --- | --- |
+| `python3 statusline.py` | `Python was not found` / exit 49 |
+| `sh run.sh statusline.py` | 正常に描画 |
+
+そのため上記の `run.sh` 形式を使うこと。`python3` → `python` → `py` の順に試し、
+`CONTEXT_CHECKER_PYTHON` を設定すればインタプリタのパスを直接指定できる。
+Claude Code は Git Bash が入っていればそれ経由でコマンドを実行するので、`sh` が使える。
+パスは引用符で囲めば `/` でも `\` でも通る。
 
 この手順を飛ばした場合、無言で無効化されるのではなく**セッションにつき1回**その旨を通知する。
 `CONTEXT_CHECKER_CONTEXT_WINDOW` に窓サイズ（トークン数）を設定すれば、transcript から
@@ -135,7 +155,7 @@ status line の実測値と transcript の両方が残っている実セッシ�
 bash tests/smoke.sh
 ```
 
-使い捨ての `HOME` の下で、モックペイロードに対して62アサーションを実行する。表示と
+使い捨ての `HOME` の下で、モックペイロードに対して68アサーションを実行する。表示と
 セグメント選択、閾値のまたぎと非重複、自動圧縮ポイントからの閾値導出、窓サイズ宣言の
 有無による推定の切り替え、sidechain の除外、subagent 行の描画と桁数制限、checkpoint の
 中身、state の刈り取り、壊れた stdin への耐性。さらに `hooks.json` と `settings.json` の
