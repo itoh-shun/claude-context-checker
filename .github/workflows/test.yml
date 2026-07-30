@@ -1,0 +1,75 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: smoke tests (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 --version
+      - name: Byte-compile every hook
+        run: python3 -m py_compile hooks/*.py
+      - name: Run the smoke suite
+        run: bash tests/smoke.sh
+
+  windows:
+    # The full suite assumes GNU coreutils and bash 4 (mapfile, touch -d), so it
+    # does not port as-is. This job guards the two things that actually broke on
+    # Windows instead: python3 resolving to the Microsoft Store stub, and a
+    # console code page that could neither print the separator nor decode a
+    # Japanese payload.
+    name: interpreter and encoding (windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: run.sh finds a working interpreter
+        run: |
+          unset CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+          PAYLOAD='{"session_id":"ci","context_window":{"used_percentage":42},"model":{"id":"m","display_name":"Opus 5"},"workspace":{"current_dir":"C:/proj/demo"},"effort":{"level":"high"},"thinking":{"enabled":true}}'
+          OUT=$(echo "$PAYLOAD" | sh hooks/run.sh hooks/statusline.py)
+          echo "got: $OUT"
+          [ "$OUT" = "[OK] ctx 42% | Opus 5 | high·think | demo" ]
+
+      - name: Non-ASCII payload survives the console code page
+        run: |
+          unset CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+          PAYLOAD='{"session_id":"ci-jp","context_window":{"used_percentage":33},"model":{"id":"m","display_name":"Opus 5"},"workspace":{"current_dir":"C:/proj/日本語プロジェクト"}}'
+          OUT=$(echo "$PAYLOAD" | PYTHONIOENCODING=cp932 sh hooks/run.sh hooks/statusline.py)
+          echo "got: $OUT"
+          [ "$OUT" = "[OK] ctx 33% | Opus 5 | 日本語プロジェクト" ]
+
+      - name: Subagent rows render under cp932
+        run: |
+          unset CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+          PAYLOAD='{"columns":80,"tasks":[{"id":"t1","name":"探索","description":"認証フローを調べる","tokenCount":62000,"contextWindowSize":1000000}]}'
+          OUT=$(echo "$PAYLOAD" | PYTHONIOENCODING=cp932 sh hooks/run.sh hooks/subagent-statusline.py)
+          echo "got: $OUT"
+          echo "$OUT" | grep -q '探索 · 認証フローを調べる · 6.2%'
+
+  manifests:
+    name: manifests are valid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every declared command resolves under CLAUDE_PLUGIN_ROOT
+        run: |
+          python3 -c "import json;json.load(open('.claude-plugin/plugin.json'))"
+          python3 -c "import json;json.load(open('.claude-plugin/marketplace.json'))"
+          python3 -c "import json;json.load(open('hooks/hooks.json'))"
+          python3 -c "import json;json.load(open('settings.json'))"
+      - name: plugin.json version matches the newest CHANGELOG heading
+        run: |
+          MANIFEST=$(python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+          CHANGELOG=$(grep -m1 '^## ' CHANGELOG.md | sed 's/^## \([0-9.]*\).*/\1/')
+          echo "manifest=$MANIFEST changelog=$CHANGELOG"
+          [ "$MANIFEST" = "$CHANGELOG" ]
