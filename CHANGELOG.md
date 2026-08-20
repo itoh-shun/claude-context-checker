@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0 — 2026-08-20
+
+### Added
+
+- **The status line shows the current git branch.** New `branch` segment, on by
+  default, so the bar reads `… | my-project | main`. Claude Code's status line payload
+  carries a working directory, a worktree name and a repo slug, but no branch — so the
+  segment reads `.git/HEAD` off disk rather than spawning `git branch --show-current`
+  on every render. It walks up from the session's directory, follows the `gitdir:`
+  pointer used by linked worktrees and submodules, keeps slashed names like
+  `feature/nested/thing` whole, and prints a short sha when HEAD is detached. Outside a
+  repository the segment is empty and drops out of the bar.
+
+### Changed
+
+- **`CONTEXT_CHECKER_STATUSLINE_SEGMENTS` now defaults to
+  `ctx,model,session,limits,cwd,branch`.** Existing bars gain the branch on upgrade;
+  set the variable without `branch` to keep the previous layout.
+
 ## 0.5.2 — 2026-07-30
 
 ### Corrected
