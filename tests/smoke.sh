@@ -315,6 +315,57 @@ CKJP=$(cat "$HOME/.claude/checkpoints/context-checker/cp932jp.latest" 2>/dev/nul
 [[ -f "$CKJP" ]] && grep -q "最初の依頼です" "$CKJP" \
   && ok "pre-compact writes UTF-8 under cp932" || bad "pre-compact writes UTF-8 under cp932"
 
+echo "== 20. statusline branch segment reads .git/HEAD =="
+GITREPO="$SANDBOX/repo"
+mkdir -p "$GITREPO"
+git -C "$GITREPO" -c init.defaultBranch=main init -q 2>/dev/null
+git -C "$GITREPO" config user.email t@example.com
+git -C "$GITREPO" config user.name tester
+echo hi > "$GITREPO/f.txt"
+git -C "$GITREPO" add f.txt && git -C "$GITREPO" commit -qm first
+
+# usage: bar_for <dir>
+bar_for() {
+  echo "{\"session_id\":\"branch\",\"context_window\":{\"used_percentage\":5},\"model\":{\"display_name\":\"Opus 5\"},\"workspace\":{\"current_dir\":\"$1\"}}" \
+    | python3 "$PLUGIN/hooks/statusline.py"
+}
+
+OUT=$(bar_for "$GITREPO")
+echo "  output: $OUT"
+[[ "$OUT" == "[OK] ctx 5% | Opus 5 | repo | main" ]] && ok "branch on the bar" || bad "branch on the bar (got: $OUT)"
+
+# a slashed name is one branch, not a path: it must survive whole
+git -C "$GITREPO" checkout -q -b feature/nested/thing
+OUT=$(bar_for "$GITREPO")
+[[ "$OUT" == *"| feature/nested/thing" ]] && ok "slashed branch kept whole" || bad "slashed branch kept whole (got: $OUT)"
+
+# the session cwd is usually deeper than the repo root
+mkdir -p "$GITREPO/a/b"
+OUT=$(bar_for "$GITREPO/a/b")
+[[ "$OUT" == *"| feature/nested/thing" ]] && ok "branch found from a subdirectory" || bad "branch found from a subdirectory (got: $OUT)"
+
+# detached HEAD has no branch name; a short sha beats printing nothing
+SHA=$(git -C "$GITREPO" rev-parse HEAD)
+git -C "$GITREPO" checkout -q --detach HEAD
+OUT=$(bar_for "$GITREPO")
+[[ "$OUT" == *"| ${SHA:0:7}" ]] && ok "detached HEAD shows a short sha" || bad "detached HEAD shows a short sha (got: $OUT)"
+git -C "$GITREPO" checkout -q main
+
+# a linked worktree's .git is a file pointing elsewhere — the branch still resolves
+git -C "$GITREPO" worktree add -q -b wt "$SANDBOX/wt" 2>/dev/null
+if [[ -f "$SANDBOX/wt/.git" ]]; then
+  OUT=$(bar_for "$SANDBOX/wt")
+  echo "  worktree: $OUT"
+  [[ "$OUT" == *"| wt" ]] && ok "linked worktree branch" || bad "linked worktree branch (got: $OUT)"
+else
+  echo "  SKIP: git worktree unavailable"
+fi
+
+# outside a repo the segment must vanish, not render a placeholder
+mkdir -p "$SANDBOX/plain"
+OUT=$(bar_for "$SANDBOX/plain")
+[[ "$OUT" == "[OK] ctx 5% | Opus 5 | plain" ]] && ok "no branch outside a repo" || bad "no branch outside a repo (got: $OUT)"
+
 echo
 rm -rf "$SANDBOX"
 if [[ $fail -eq 0 ]]; then echo "ALL PASS"; else echo "FAILURES PRESENT"; fi

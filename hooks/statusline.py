@@ -7,7 +7,7 @@ Two jobs:
      hooks can read an authoritative percentage from.
 
 Which segments appear is controlled by CONTEXT_CHECKER_STATUSLINE_SEGMENTS, a
-comma-separated subset of: ctx, model, session, limits, cwd.
+comma-separated subset of: ctx, model, session, limits, cwd, branch.
 """
 import json
 import os
@@ -28,7 +28,7 @@ from _common import (  # noqa: E402
     write_json,
 )
 
-DEFAULT_SEGMENTS = "ctx,model,session,limits,cwd"
+DEFAULT_SEGMENTS = "ctx,model,session,limits,cwd,branch"
 RATE_LIMIT_MIN_ENV = "CONTEXT_CHECKER_RATE_LIMIT_MIN_PCT"
 
 
@@ -54,6 +54,49 @@ def ctx_segment(used_pct: float | None) -> str:
         body = f"[{marker_for(used_pct)}] ctx {format_pct(used_pct)}%"
     auto = autocompact_pct()
     return f"{body} → auto {format_pct(auto)}%" if auto is not None else body
+
+
+def git_branch(cwd: str) -> str:
+    """Current branch, read straight off disk rather than through a subprocess.
+
+    The status line re-renders constantly, so spawning `git branch --show-current`
+    each time is a cost the bar should not pay — the file that command would read
+    is right there. Detached HEAD renders as a short sha; anything unrecognised
+    renders as nothing, and the empty segment is dropped.
+    """
+    if not cwd:
+        return ""
+    try:
+        start = Path(cwd).resolve()
+    except Exception:
+        return ""
+
+    for directory in (start, *start.parents):
+        marker = directory / ".git"
+        try:
+            if marker.is_dir():
+                git_dir = marker
+            elif marker.is_file():
+                # Linked worktrees and submodules point elsewhere: `gitdir: <path>`,
+                # which is often relative to the directory holding the .git file.
+                pointer = marker.read_text(encoding="utf-8").strip()
+                if not pointer.startswith("gitdir:"):
+                    return ""
+                git_dir = (directory / pointer[len("gitdir:"):].strip()).resolve()
+            else:
+                continue
+            head = (git_dir / "HEAD").read_text(encoding="utf-8").strip()
+        except Exception:
+            return ""
+
+        prefix = "ref: refs/heads/"
+        if head.startswith(prefix):
+            # Sliced, not basename'd: `feature/foo` is one branch name, not a path.
+            return head[len(prefix):]
+        if len(head) in (40, 64) and all(c in "0123456789abcdef" for c in head):
+            return head[:7]  # detached HEAD
+        return ""
+    return ""
 
 
 def session_segment(payload: dict) -> str:
@@ -126,6 +169,7 @@ def main() -> None:
         "session": session_segment(payload),
         "limits": limits_segment(payload),
         "cwd": Path(cwd).name if cwd else "",
+        "branch": git_branch(cwd),
     }
     rendered = [available.get(name, "") for name in enabled_segments()]
     print(" | ".join(part for part in rendered if part))

@@ -12,7 +12,7 @@ English version: [README.md](README.md)
 
 | コンポーネント | イベント | 動作 |
 | --- | --- | --- |
-| `statusline.py` | status line | コンテキスト使用率・自動圧縮ポイント・モデル・effort・プラン上限を表示し、使用率をフックが読める形で記録する |
+| `statusline.py` | status line | コンテキスト使用率・自動圧縮ポイント・モデル・effort・プラン上限・現在の git ブランチを表示し、使用率をフックが読める形で記録する |
 | `subagent-statusline.py` | subagent status line | エージェント各行の生トークン数を、そのエージェント自身の窓に対する割合に置き換える |
 | `prompt-submit.py` | `UserPromptSubmit` | 閾値を上向きにまたぐたび1回だけ警告を注入する。同レベル内では繰り返さない |
 | `pre-compact.py` | `PreCompact` | checkpoint markdown を書き出す（直近の user メッセージは逐語、assistant は切り詰め、編集ファイル、実行コマンド） |
@@ -22,7 +22,7 @@ English version: [README.md](README.md)
 Python 3 標準ライブラリのみ。依存パッケージなし、通信なし。
 
 ```
-[WARN] ctx 62% → auto 70% | Opus 5 (1M context) | high·think | 5h 27% · 7d 35% | my-project
+[WARN] ctx 62% → auto 70% | Opus 5 (1M context) | high·think | 5h 27% · 7d 35% | my-project | main
 ```
 
 ```
@@ -123,7 +123,7 @@ Claude Code は Git Bash が入っていればそれ経由でコマンドを実�
 | `CONTEXT_CHECKER_WARN_PCT` | `75`／自動圧縮の5pt手前 | critical 警告の閾値 |
 | `CONTEXT_CHECKER_STATE_TTL_DAYS` | `14` | この日数を超えたセッション state ファイルを削除 |
 | `CONTEXT_CHECKER_CONTEXT_WINDOW` | 未設定 | transcript 推定に使う窓サイズ（トークン数） |
-| `CONTEXT_CHECKER_STATUSLINE_SEGMENTS` | `ctx,model,session,limits,cwd` | status line に出すセグメントと順序 |
+| `CONTEXT_CHECKER_STATUSLINE_SEGMENTS` | `ctx,model,session,limits,cwd,branch` | status line に出すセグメントと順序 |
 | `CONTEXT_CHECKER_RATE_LIMIT_MIN_PCT` | `0` | この%に達するまでプラン上限の表示を隠す |
 
 ### 自動圧縮ポイントへの追従
@@ -141,6 +141,14 @@ status line には基準にしているポイントを表示する：
 
 Claude Code は組み込みの自動圧縮閾値をフックに公開していないため、変数が未設定なら
 矢印は出さず、既定の 60/75 で動く。
+
+### branch セグメント
+
+Claude Code が status line に渡すのは作業ディレクトリだけでブランチ名は含まれない。
+そのため `branch` は描画のたびに `git` を起動せず、`.git/HEAD` を直接読む。
+セッションのディレクトリから上に辿り、リンク worktree や submodule が残す
+`gitdir:` ポインタを追い、HEAD が detached なら短縮 sha を出す。
+リポジトリの外ではセグメントが空になり、バーから消える。
 
 ## 書き出すファイル
 

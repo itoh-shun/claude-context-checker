@@ -12,7 +12,7 @@ transcript is summarized away — so a compaction never silently drops the threa
 
 | Component | Event | Behaviour |
 | --- | --- | --- |
-| `statusline.py` | status line | Renders context usage, the auto-compact point, model, effort, and plan limits — and records the usage figure for the hooks to read |
+| `statusline.py` | status line | Renders context usage, the auto-compact point, model, effort, plan limits, and the current git branch — and records the usage figure for the hooks to read |
 | `subagent-statusline.py` | subagent status line | Replaces each agent row's raw token count with a percentage of that agent's own context window |
 | `prompt-submit.py` | `UserPromptSubmit` | Injects one warning per threshold crossing. Never repeats within the same level |
 | `pre-compact.py` | `PreCompact` | Writes a markdown checkpoint: recent user messages verbatim, truncated assistant replies, files edited, commands run |
@@ -22,7 +22,7 @@ transcript is summarized away — so a compaction never silently drops the threa
 Python 3 standard library only. No dependencies, no network calls.
 
 ```
-[WARN] ctx 62% → auto 70% | Opus 5 (1M context) | high·think | 5h 27% · 7d 35% | my-project
+[WARN] ctx 62% → auto 70% | Opus 5 (1M context) | high·think | 5h 27% · 7d 35% | my-project | main
 ```
 
 ```
@@ -127,7 +127,7 @@ All optional, read from the environment (`env` in `settings.json` works):
 | `CONTEXT_CHECKER_WARN_PCT` | `75`, or 5 below auto-compact | Critical warning threshold |
 | `CONTEXT_CHECKER_STATE_TTL_DAYS` | `14` | Delete per-session state files older than this |
 | `CONTEXT_CHECKER_CONTEXT_WINDOW` | unset | Context window size in tokens, for the transcript fallback |
-| `CONTEXT_CHECKER_STATUSLINE_SEGMENTS` | `ctx,model,session,limits,cwd` | Which segments the status line shows, in order |
+| `CONTEXT_CHECKER_STATUSLINE_SEGMENTS` | `ctx,model,session,limits,cwd,branch` | Which segments the status line shows, in order |
 | `CONTEXT_CHECKER_RATE_LIMIT_MIN_PCT` | `0` | Hide a plan-limit window until it reaches this percentage |
 
 ### Following the auto-compact point
@@ -146,6 +146,14 @@ The status line shows the point it is working against:
 
 Claude Code does not publish its built-in auto-compact threshold to hooks, so with
 the variable unset the arrow is omitted and the stock 60/75 defaults apply.
+
+### The branch segment
+
+Claude Code hands the status line a working directory but no branch, so `branch`
+reads `.git/HEAD` directly instead of spawning `git` on every render. It walks up
+from the session's directory, follows the `gitdir:` pointer that linked worktrees
+and submodules leave behind, and prints a short sha when HEAD is detached. Outside
+a repository the segment is empty and disappears from the bar.
 
 ## Files written
 
